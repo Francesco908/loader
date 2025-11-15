@@ -1,4 +1,4 @@
--- ILLUSION HUB v6 | FIXED
+-- ILLUSION HUB v5 | COMPACT + MINIMIZE
 local G = game
 local P = G:GetService("Players")
 local R = G:GetService("ReplicatedStorage")
@@ -7,46 +7,37 @@ local U = G:GetService("UserInputService")
 local W = G:GetService("Workspace")
 local L = G:GetService("Lighting")
 local LP = P.LocalPlayer
+local M = LP:GetMouse()
 
 -- Core Variables
 local Data = {
-    Speed = {On = false, Val = 150, Conn = nil, Fire = nil},
+    Speed = {On = false, Val = 1.5, Conn = nil},
     Kick = {On = false, Key = "you stole", Msg = "You stole brainrot!"},
     Laser = {On = false, Range = 100, Delay = 0.6},
-    ESP = {
-        Players = {On = false, List = {}}, 
-        Best = {On = false, Current = nil},
-        Base = {On = false, List = {}}
-    },
+    ESP = {Players = {On = false, List = {}}, Best = {On = false, Current = nil}},
     FPS = {On = false, Original = {}}
 }
 
--- GUI Creation Helper
+-- GUI Creation
+local S = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
+S.Name = "IH"
+S.ResetOnSpawn = false
+
 local function C(t, p, s)
     local o = Instance.new(t, p)
-    for k, v in pairs(s or {}) do 
-        o[k] = v 
-    end
+    for k, v in pairs(s or {}) do o[k] = v end
     return o
 end
 
 local function R(o, r) 
-    local corner = Instance.new("UICorner", o)
-    corner.CornerRadius = UDim.new(0, r or 8)
+    C("UICorner", o, {CornerRadius = UDim.new(0, r or 8)}) 
 end
 
--- Create ScreenGui
-local S = Instance.new("ScreenGui")
-S.Name = "IH"
-S.ResetOnSpawn = false
-S.Parent = LP:WaitForChild("PlayerGui")
-
--- Main Frame
+-- Main Frame (più compatto verticalmente)
 local F = C("Frame", S, {
-    Size = UDim2.new(0, 240, 0, 320),
+    Size = UDim2.new(0, 240, 0, 320),  -- Più piccolo verticalmente
     Position = UDim2.new(0.5, -120, 0.5, -160),
     BackgroundColor3 = Color3.fromRGB(20, 20, 20),
-    BorderSizePixel = 0,
     Active = true,
     Draggable = true
 })
@@ -55,9 +46,7 @@ R(F, 10)
 -- Title Bar
 local T = C("Frame", F, {
     Size = UDim2.new(1, 0, 0, 28),
-    Position = UDim2.new(0, 0, 0, 0),
-    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-    BorderSizePixel = 0
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 })
 R(T, 10)
 
@@ -65,11 +54,10 @@ C("TextLabel", T, {
     Size = UDim2.new(1, -60, 1, 0),
     Position = UDim2.new(0, 8, 0, 0),
     BackgroundTransparency = 1,
-    Text = "ILLUSION HUB",
+    Text = "ILLUSION",
     TextColor3 = Color3.fromRGB(147, 112, 219),
     Font = Enum.Font.GothamBold,
-    TextSize = 13,
-    BorderSizePixel = 0
+    TextSize = 13
 })
 
 -- Minimize Button
@@ -80,8 +68,7 @@ local Min = C("TextButton", T, {
     Text = "—",
     TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
-    BorderSizePixel = 0
+    TextSize = 14
 })
 R(Min, 4)
 
@@ -93,32 +80,29 @@ local X = C("TextButton", T, {
     Text = "×",
     TextColor3 = Color3.fromRGB(255, 255, 255),
     Font = Enum.Font.GothamBold,
-    TextSize = 16,
-    BorderSizePixel = 0
+    TextSize = 16
 })
 R(X, 4)
 
--- Content Container
+-- Content Container (per minimize)
 local ContentContainer = C("Frame", F, {
     Size = UDim2.new(1, 0, 1, -28),
     Position = UDim2.new(0, 0, 0, 28),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0
+    BackgroundTransparency = 1
 })
 
--- Tabs Container
+-- Tabs (4 tabs ora)
+local TabBtns = {}
+local Contents = {}
+local isMinimized = false
+
 local TabC = C("Frame", ContentContainer, {
     Size = UDim2.new(1, -12, 0, 24),
     Position = UDim2.new(0, 6, 0, 4),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0
+    BackgroundTransparency = 1
 })
 
--- Create Tabs
-local TabBtns = {}
-local Contents = {}
 local tabs = {"Main", "ESP", "Misc", "Other"}
-
 for i, name in ipairs(tabs) do
     TabBtns[name] = C("TextButton", TabC, {
         Size = UDim2.new(0.25, -2, 1, 0),
@@ -127,8 +111,7 @@ for i, name in ipairs(tabs) do
         Text = name:upper(),
         TextColor3 = i == 1 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180),
         Font = Enum.Font.GothamBold,
-        TextSize = 10,
-        BorderSizePixel = 0
+        TextSize = 10
     })
     R(TabBtns[name], 5)
     
@@ -138,14 +121,12 @@ for i, name in ipairs(tabs) do
         BackgroundColor3 = Color3.fromRGB(25, 25, 25),
         ScrollBarThickness = 2,
         Visible = i == 1,
-        CanvasSize = UDim2.new(0, 0, 0, 400),
-        BorderSizePixel = 0
+        CanvasSize = UDim2.new(0, 0, 0, 400)
     })
     R(Contents[name], 6)
 end
 
--- Minimize Functionality
-local isMinimized = false
+-- Minimize Function
 Min.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     if isMinimized then
@@ -159,31 +140,24 @@ Min.MouseButton1Click:Connect(function()
     end
 end)
 
--- Close Functionality
-X.MouseButton1Click:Connect(function()
-    S:Destroy()
-end)
-
--- Toggle Creator Function
-local function CT(parent, y, title, data, callback)
+-- Toggle Creator Ultra Compatto
+local function CT(parent, y, title, data, callback, hasSlider)
     local frame = C("Frame", parent, {
-        Size = UDim2.new(1, -8, 0, 50),  
+        Size = UDim2.new(1, -8, 0, hasSlider and 70 or 50),  
         Position = UDim2.new(0, 4, 0, y),
-        BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-        BorderSizePixel = 0
+        BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     })
     R(frame, 6)
     
     C("TextLabel", frame, {
-        Size = UDim2.new(0.65, 0, 0, 18),
+        Size = UDim2.new(0.7, 0, 0, 18),
         Position = UDim2.new(0, 8, 0, 4),
         BackgroundTransparency = 1,
         Text = title,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        BorderSizePixel = 0
+        TextXAlignment = Enum.TextXAlignment.Left
     })
     
     local btn = C("TextButton", frame, {
@@ -193,8 +167,7 @@ local function CT(parent, y, title, data, callback)
         Text = "OFF",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Font = Enum.Font.Gotham,
-        TextSize = 9,
-        BorderSizePixel = 0
+        TextSize = 9
     })
     R(btn, 9)
     
@@ -202,155 +175,101 @@ local function CT(parent, y, title, data, callback)
         data.On = not data.On
         btn.Text = data.On and "ON" or "OFF"
         btn.BackgroundColor3 = data.On and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(60, 60, 60)
-        if callback then 
-            pcall(callback, data.On)
-        end
+        if callback then callback(data.On) end
     end)
     
     return frame, btn
 end
 
--- Speed Boost Variables
-local character, humanoid, hrp
-local DEFAULT_SPEED = 16
-
-local function updateCharacter()
-    character = LP.Character or LP.CharacterAdded:Wait()
-    humanoid = character:WaitForChild("Humanoid", 5)
-    hrp = character:WaitForChild("HumanoidRootPart", 5)
-    if humanoid then
-        humanoid.JumpPower = 50
-    end
-end
-
-local function buyGrapple()
-    pcall(function()
-        R:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RF/CoinsShopService/RequestBuy"):InvokeServer("Grapple Hook")
-    end)
-end
-
-local function autoEquip()
-    pcall(function()
-        if not LP.Character then return end
-        local hum = LP.Character:FindFirstChildOfClass("Humanoid")
-        if not hum or hum.Health <= 0 then return end
-        
-        local currentTool = LP.Character:FindFirstChildOfClass("Tool")
-        if currentTool and currentTool.Name == "Grapple Hook" then return end
-        
-        local backpack = LP:FindFirstChild("Backpack")
-        if not backpack then return end
-        
-        local grapple = backpack:FindFirstChild("Grapple Hook")
-        if grapple then
-            hum:EquipTool(grapple)
-        end
-    end)
-end
-
-local function fakeFire()
-    autoEquip()
-    pcall(function()
-        R:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE/UseItem"):FireServer(1.9832406361897787)
-    end)
-end
-
-local function startSpeedHack()
-    if Data.Speed.Conn then 
-        Data.Speed.Conn:Disconnect() 
-    end
-    
-    Data.Speed.Conn = RN.Heartbeat:Connect(function()
-        if not Data.Speed.On then return end
-        if not humanoid or not hrp then return end
-        
-        local dir = humanoid.MoveDirection
-        if dir.Magnitude > 0 then
-            dir = dir.Unit
-            hrp.AssemblyLinearVelocity = Vector3.new(dir.X * Data.Speed.Val, hrp.AssemblyLinearVelocity.Y, dir.Z * Data.Speed.Val)
-        end
-    end)
-end
-
-local function startFakeFireLoop()
-    if Data.Speed.Fire then 
-        Data.Speed.Fire:Disconnect() 
-    end
-    
-    Data.Speed.Fire = RN.Heartbeat:Connect(function()
-        if Data.Speed.On then 
-            fakeFire() 
-        end
-    end)
-end
-
-local function stopSpeed()
-    if Data.Speed.Conn then 
-        Data.Speed.Conn:Disconnect() 
-        Data.Speed.Conn = nil
-    end
-    if Data.Speed.Fire then 
-        Data.Speed.Fire:Disconnect() 
-        Data.Speed.Fire = nil
-    end
-    if humanoid then 
-        humanoid.WalkSpeed = DEFAULT_SPEED 
-    end
-end
-
--- MAIN TAB
-local speedFrame, speedBtn = CT(Contents.Main, 5, "Speed Boost", Data.Speed, function(on)
-    updateCharacter()
+-- MAIN TAB - Speed Boost
+local speedFrame = CT(Contents.Main, 5, "Speed Boost", Data.Speed, function(on)
     if on then
-        buyGrapple()
-        startSpeedHack()
-        startFakeFireLoop()
+        Data.Speed.Conn = RN.Stepped:Connect(function()
+            if not Data.Speed.On then return end
+            local char = LP.Character
+            if char then
+                local hum = char:FindFirstChild("Humanoid")
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if hum and root then
+                    local moveVector = hum.MoveDirection
+                    if moveVector.Magnitude > 0 then
+                        local newCF = root.CFrame + (moveVector * Data.Speed.Val)
+                        root.CFrame = newCF
+                    end
+                end
+            end
+        end)
     else
-        stopSpeed()
+        if Data.Speed.Conn then 
+            Data.Speed.Conn:Disconnect() 
+            Data.Speed.Conn = nil 
+        end
+    end
+end, true)
+
+-- Speed Slider
+local speedSlider = C("Frame", speedFrame, {
+    Size = UDim2.new(0.9, 0, 0, 16),
+    Position = UDim2.new(0, 8, 0, 28),
+    BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+})
+R(speedSlider, 8)
+
+local speedFill = C("Frame", speedSlider, {
+    Size = UDim2.new(0.3, 0, 1, 0),
+    BackgroundColor3 = Color3.fromRGB(147, 112, 219)
+})
+R(speedFill, 8)
+
+local speedValue = C("TextLabel", speedFrame, {
+    Size = UDim2.new(0, 35, 0, 14),
+    Position = UDim2.new(1, -42, 0, 48),
+    BackgroundTransparency = 1,
+    Text = "1.5x",
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Font = Enum.Font.GothamBold,
+    TextSize = 9
+})
+
+-- Slider functionality
+local draggingSlider = false
+speedSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = true
     end
 end)
 
-speedFrame.Size = UDim2.new(1, -8, 0, 70)
+U.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = false
+    end
+end)
 
-local speedInput = C("TextBox", speedFrame, {
-    Size = UDim2.new(0.9, 0, 0, 22),
-    Position = UDim2.new(0, 8, 0, 28),
-    BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-    Text = "150",
-    PlaceholderText = "Speed (40-1000)",
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    Font = Enum.Font.Gotham,
-    TextSize = 10,
-    ClearTextOnFocus = false,
-    BorderSizePixel = 0
-})
-R(speedInput, 6)
-
-speedInput:GetPropertyChangedSignal("Text"):Connect(function()
-    local val = tonumber(speedInput.Text)
-    if val then 
-        Data.Speed.Val = math.clamp(val, 40, 1000) 
+U.InputChanged:Connect(function(input)
+    if draggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local mousePos = U:GetMouseLocation()
+        local sliderPos = speedSlider.AbsolutePosition.X
+        local sliderSize = speedSlider.AbsoluteSize.X
+        local percentage = math.clamp((mousePos.X - sliderPos) / sliderSize, 0, 1)
+        
+        speedFill.Size = UDim2.new(percentage, 0, 1, 0)
+        Data.Speed.Val = 0.5 + (percentage * 3.5)
+        speedValue.Text = string.format("%.1fx", Data.Speed.Val)
     end
 end)
 
 CT(Contents.Main, 80, "Auto Kick", Data.Kick, function(on)
     if on then
         local function scan(obj)
-            if (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) then
-                if obj.Text and string.find(string.lower(obj.Text), Data.Kick.Key) then
-                    LP:Kick(Data.Kick.Msg)
-                end
+            if (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) and 
+               obj.Text and obj.Text:lower():find(Data.Kick.Key) then
+                LP:Kick(Data.Kick.Msg)
             end
         end
         
-        for _, gui in ipairs(LP.PlayerGui:GetDescendants()) do 
-            scan(gui) 
-        end
-        
+        for _, gui in ipairs(LP.PlayerGui:GetDescendants()) do scan(gui) end
         LP.PlayerGui.DescendantAdded:Connect(function(obj)
-            if Data.Kick.On then 
-                scan(obj) 
-            end
+            if Data.Kick.On then scan(obj) end
         end)
     end
 end)
@@ -358,29 +277,22 @@ end)
 -- ESP TAB
 CT(Contents.ESP, 5, "ESP Players", Data.ESP.Players, function(on)
     if on then
-        local folder = Instance.new("Folder")
-        folder.Name = "ESP_P"
-        folder.Parent = W
+        local folder = C("Folder", W, {Name = "ESP_P"})
         Data.ESP.Players.List.Folder = folder
         
         for _, p in ipairs(P:GetPlayers()) do
             if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                 pcall(function()
-                    local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-                    if not myRoot then return end
-                    
-                    local a1 = Instance.new("Attachment", myRoot)
-                    local a2 = Instance.new("Attachment", p.Character.HumanoidRootPart)
-                    
-                    local beam = Instance.new("Beam")
-                    beam.Attachment0 = a1
-                    beam.Attachment1 = a2
-                    beam.Width0 = 0.15
-                    beam.Width1 = 0.15
-                    beam.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0))
-                    beam.LightInfluence = 0
-                    beam.Parent = folder
-                    
+                    local a1 = C("Attachment", LP.Character.HumanoidRootPart)
+                    local a2 = C("Attachment", p.Character.HumanoidRootPart)
+                    local beam = C("Beam", folder, {
+                        Attachment0 = a1,
+                        Attachment1 = a2,
+                        Width0 = 0.15,
+                        Width1 = 0.15,
+                        Color = ColorSequence.new(Color3.fromRGB(255, 0, 0)),
+                        LightInfluence = 0
+                    })
                     Data.ESP.Players.List[p] = {a1, a2, beam}
                 end)
             end
@@ -390,12 +302,8 @@ CT(Contents.ESP, 5, "ESP Players", Data.ESP.Players, function(on)
             Data.ESP.Players.List.Folder:Destroy()
         end
         for _, v in pairs(Data.ESP.Players.List) do
-            if type(v) == "table" then
-                for _, obj in ipairs(v) do
-                    if obj then 
-                        pcall(function() obj:Destroy() end)
-                    end
-                end
+            for _, obj in ipairs(v) do
+                if obj then obj:Destroy() end
             end
         end
         Data.ESP.Players.List = {}
@@ -405,50 +313,37 @@ end)
 CT(Contents.ESP, 60, "ESP Best Pet", Data.ESP.Best, function(on)
     if on then
         task.spawn(function()
-            local folder = Instance.new("Folder")
-            folder.Name = "ESP_B"
-            folder.Parent = W
-            
+            local folder = C("Folder", W, {Name = "ESP_B"})
             while Data.ESP.Best.On do
                 task.wait(0.3)
-                
                 local best = {val = -1}
                 local plots = W:FindFirstChild("Plots")
-                
                 if plots then
                     for _, plot in ipairs(plots:GetChildren()) do
-                        pcall(function()
-                            local pods = plot:FindFirstChild("AnimalPodiums")
-                            if pods then
-                                for _, pod in ipairs(pods:GetChildren()) do
-                                    local spawn = pod:FindFirstChild("Base") and pod.Base:FindFirstChild("Spawn")
-                                    if spawn then
-                                        local att = spawn:FindFirstChild("Attachment")
-                                        local oh = att and att:FindFirstChild("AnimalOverhead")
-                                        if oh then
-                                            local gen = oh:FindFirstChild("Generation")
-                                            if gen then
-                                                local text = gen.Text
-                                                local val = tonumber(text:match("%$?([%d%.]+)")) or 0
-                                                
-                                                if text:lower():find("k") then val = val * 1e3
-                                                elseif text:lower():find("m") then val = val * 1e6
-                                                elseif text:lower():find("b") then val = val * 1e9 end
-                                                
-                                                if val > best.val then
-                                                    best = {
-                                                        val = val, 
-                                                        part = spawn, 
-                                                        name = oh:FindFirstChild("DisplayName") and oh.DisplayName.Text or "Pet", 
-                                                        info = text
-                                                    }
-                                                end
+                        local pods = plot:FindFirstChild("AnimalPodiums")
+                        if pods then
+                            for _, pod in ipairs(pods:GetChildren()) do
+                                local spawn = pod:FindFirstChild("Base") and pod.Base:FindFirstChild("Spawn")
+                                if spawn then
+                                    local att = spawn:FindFirstChild("Attachment")
+                                    local oh = att and att:FindFirstChild("AnimalOverhead")
+                                    if oh then
+                                        local gen = oh:FindFirstChild("Generation")
+                                        if gen then
+                                            local text = gen.Text
+                                            local val = tonumber(text:match("%$?([%d%.]+)")) or 0
+                                            if text:lower():find("k") then val = val * 1e3
+                                            elseif text:lower():find("m") then val = val * 1e6
+                                            elseif text:lower():find("b") then val = val * 1e9 end
+                                            
+                                            if val > best.val then
+                                                best = {val = val, part = spawn, name = oh:FindFirstChild("DisplayName") and oh.DisplayName.Text or "Pet", info = text}
                                             end
                                         end
                                     end
                                 end
                             end
-                        end)
+                        end
                     end
                 end
                 
@@ -459,46 +354,44 @@ CT(Contents.ESP, 60, "ESP Best Pet", Data.ESP.Best, function(on)
                         end
                     end
                     
-                    local a1 = Instance.new("Attachment", LP.Character.HumanoidRootPart)
-                    local a2 = Instance.new("Attachment", best.part)
-                    
-                    local beam = Instance.new("Beam")
-                    beam.Attachment0 = a1
-                    beam.Attachment1 = a2
-                    beam.Width0 = 0.3
-                    beam.Width1 = 0.3
-                    beam.FaceCamera = true
-                    beam.LightInfluence = 0
-                    beam.Parent = folder
+                    local a1 = C("Attachment", LP.Character.HumanoidRootPart)
+                    local a2 = C("Attachment", best.part)
+                    local beam = C("Beam", folder, {
+                        Attachment0 = a1,
+                        Attachment1 = a2,
+                        Width0 = 0.3,
+                        Width1 = 0.3,
+                        FaceCamera = true,
+                        LightInfluence = 0
+                    })
                     
                     task.spawn(function()
-                        while beam.Parent and Data.ESP.Best.On do
+                        while beam.Parent do
                             beam.Color = ColorSequence.new(Color3.fromHSV((tick() % 5) / 5, 1, 1))
                             task.wait(0.05)
                         end
                     end)
                     
-                    local bg = Instance.new("BillboardGui")
-                    bg.Size = UDim2.new(0, 100, 0, 35)
-                    bg.AlwaysOnTop = true
-                    bg.Adornee = best.part
-                    bg.StudsOffset = Vector3.new(0, 3, 0)
-                    bg.Parent = LP.PlayerGui
+                    local bg = C("BillboardGui", LP.PlayerGui, {
+                        Size = UDim2.new(0, 100, 0, 35),
+                        AlwaysOnTop = true,
+                        Adornee = best.part,
+                        StudsOffset = Vector3.new(0, 3, 0)
+                    })
                     
-                    local label = Instance.new("TextLabel")
-                    label.Size = UDim2.new(1, 0, 1, 0)
-                    label.BackgroundTransparency = 1
-                    label.Text = best.name .. "\n" .. best.info
-                    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    label.TextStrokeTransparency = 0
-                    label.TextScaled = true
-                    label.Font = Enum.Font.GothamBold
-                    label.Parent = bg
+                    C("TextLabel", bg, {
+                        Size = UDim2.new(1, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        Text = best.name .. "\n" .. best.info,
+                        TextColor3 = Color3.fromRGB(255, 255, 255),
+                        TextStrokeTransparency = 0,
+                        TextScaled = true,
+                        Font = Enum.Font.GothamBold
+                    })
                     
                     Data.ESP.Best.Current = {a1, a2, beam, bg}
                 end
             end
-            
             folder:Destroy()
         end)
     else
@@ -511,90 +404,12 @@ CT(Contents.ESP, 60, "ESP Best Pet", Data.ESP.Best, function(on)
     end
 end)
 
-CT(Contents.ESP, 115, "ESP Base", Data.ESP.Base, function(on)
-    if on then
-        local camera = W.CurrentCamera
-        local plotsFolder = W:FindFirstChild("Plots")
-        if not plotsFolder then return end
-        
-        local function createPlotESP(plot)
-            pcall(function()
-                local mainPart = plot:WaitForChild("Purchases", 3):WaitForChild("PlotBlock", 3):WaitForChild("Main", 3)
-                
-                local remainingGui = mainPart:FindFirstChild("BillboardGui")
-                local remainingTimeLabel
-                if remainingGui then
-                    remainingTimeLabel = remainingGui:FindFirstChild("RemainingTime")
-                end
-                
-                local esp = Instance.new("BillboardGui")
-                esp.Name = "PlotESP"
-                esp.Adornee = mainPart
-                esp.Size = UDim2.new(0, 180, 0, 40)
-                esp.StudsOffset = Vector3.new(0, 5, 0)
-                esp.AlwaysOnTop = true
-                esp.MaxDistance = 1000
-                esp.Parent = plot
-                
-                local text = Instance.new("TextLabel")
-                text.Name = "ESPText"
-                text.Size = UDim2.new(1, -10, 1, -10)
-                text.Position = UDim2.new(0, 5, 0, 5)
-                text.BackgroundTransparency = 1
-                text.TextScaled = true
-                text.Font = Enum.Font.GothamBold
-                text.TextStrokeTransparency = 0.5
-                text.TextStrokeColor3 = Color3.new(0, 0, 0)
-                text.TextColor3 = Color3.fromRGB(0, 255, 100)
-                text.Parent = esp
-                
-                local updateConn = RN.RenderStepped:Connect(function()
-                    if not Data.ESP.Base.On or not esp.Parent then
-                        updateConn:Disconnect()
-                        return
-                    end
-                    
-                    if remainingTimeLabel and remainingTimeLabel.Parent then
-                        text.Text = "Locked: " .. remainingTimeLabel.Text
-                    else
-                        text.Text = "Plot: " .. plot.Name
-                    end
-                    
-                    local distance = (camera.CFrame.Position - mainPart.Position).Magnitude
-                    local scale = math.clamp(1 - (distance / 1000), 0.6, 1.2)
-                    esp.Size = UDim2.new(0, 180 * scale, 0, 40 * scale)
-                end)
-                
-                table.insert(Data.ESP.Base.List, {esp = esp, conn = updateConn})
-            end)
-        end
-        
-        for _, plot in ipairs(plotsFolder:GetChildren()) do
-            createPlotESP(plot)
-        end
-        
-        plotsFolder.ChildAdded:Connect(function(plot)
-            if Data.ESP.Base.On then
-                task.wait(0.5)
-                createPlotESP(plot)
-            end
-        end)
-    else
-        for _, item in ipairs(Data.ESP.Base.List) do
-            if item.esp then pcall(function() item.esp:Destroy() end) end
-            if item.conn then pcall(function() item.conn:Disconnect() end) end
-        end
-        Data.ESP.Base.List = {}
-    end
-end)
-
--- MISC TAB
+-- MISC TAB - Auto Laser spostato qui
 CT(Contents.Misc, 5, "Auto Laser", Data.Laser, function(on)
     if on then
         task.spawn(function()
             while Data.Laser.On do
                 task.wait(Data.Laser.Delay)
-                
                 local char = LP.Character
                 if char and char:FindFirstChild("HumanoidRootPart") then
                     local pos = char.HumanoidRootPart.Position
@@ -613,14 +428,11 @@ CT(Contents.Misc, 5, "Auto Laser", Data.Laser, function(on)
                     
                     if nearest then
                         pcall(function()
-                            local bp = LP:FindFirstChild("Backpack")
-                            if bp then
-                                local laser = bp:FindFirstChild("Laser Cape")
-                                if laser and char.Humanoid then
-                                    char.Humanoid:EquipTool(laser)
-                                end
+                            local bp = LP.Backpack
+                            local laser = bp:FindFirstChild("Laser Cape")
+                            if laser then
+                                char.Humanoid:EquipTool(laser)
                             end
-                            
                             local hand = nearest.Character:FindFirstChild("RightHand") or nearest.Character:FindFirstChild("LeftHand")
                             if hand then
                                 R:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE/UseItem"):FireServer(hand.Position, hand)
@@ -633,27 +445,31 @@ CT(Contents.Misc, 5, "Auto Laser", Data.Laser, function(on)
     end
 end)
 
--- OTHER TAB
+-- OTHER TAB - FPS Boost/Potato Graphics
 CT(Contents.Other, 5, "FPS Boost", Data.FPS, function(on)
     if on then
+        -- Save original settings
         Data.FPS.Original = {
-            GlobalShadows = L.GlobalShadows,
+            Lighting = L.GlobalShadows,
             FogEnd = L.FogEnd,
             Brightness = L.Brightness,
             QualityLevel = settings().Rendering.QualityLevel
         }
         
+        -- Potato Mode
         L.GlobalShadows = false
         L.FogEnd = 9e9
         L.Brightness = 2
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
         
+        -- Remove effects
         for _, v in pairs(L:GetDescendants()) do
             if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") then
                 v.Enabled = false
             end
         end
         
+        -- Reduce parts quality
         for _, v in pairs(W:GetDescendants()) do
             if v:IsA("Part") or v:IsA("MeshPart") or v:IsA("UnionOperation") then
                 v.Material = Enum.Material.SmoothPlastic
@@ -665,19 +481,24 @@ CT(Contents.Other, 5, "FPS Boost", Data.FPS, function(on)
             end
         end
         
+        -- Remove terrain decorations
         W.Terrain.WaterWaveSize = 0
         W.Terrain.WaterWaveSpeed = 0
         W.Terrain.WaterReflectance = 0
         W.Terrain.WaterTransparency = 1
         
+        -- Disable shadows for all lights
         for _, v in pairs(W:GetDescendants()) do
             if v:IsA("Light") then
                 v.Shadows = false
             end
         end
+        
+        print("✅ FPS Boost Enabled - Potato Mode Active")
     else
-        if Data.FPS.Original.GlobalShadows ~= nil then
-            L.GlobalShadows = Data.FPS.Original.GlobalShadows
+        -- Restore original settings
+        if Data.FPS.Original.Lighting ~= nil then
+            L.GlobalShadows = Data.FPS.Original.Lighting
             L.FogEnd = Data.FPS.Original.FogEnd
             L.Brightness = Data.FPS.Original.Brightness
             settings().Rendering.QualityLevel = Data.FPS.Original.QualityLevel
@@ -688,39 +509,38 @@ CT(Contents.Other, 5, "FPS Boost", Data.FPS, function(on)
                 v.Enabled = true
             end
         end
+        
+        print("✅ FPS Boost Disabled - Normal Graphics")
     end
 end)
 
-local infoLabel = C("TextLabel", Contents.Other, {
+-- Info label for FPS
+C("TextLabel", Contents.Other, {
     Size = UDim2.new(1, -16, 0, 40),
     Position = UDim2.new(0, 8, 0, 60),
     BackgroundColor3 = Color3.fromRGB(35, 35, 35),
-    Text = "Potato Graphics:\n• Removes shadows\n• Simplifies materials",
+    Text = "Potato Graphics:\n• Removes shadows & effects\n• Simplifies materials",
     TextColor3 = Color3.fromRGB(180, 180, 180),
     Font = Enum.Font.Gotham,
     TextSize = 9,
     TextWrapped = true,
-    TextYAlignment = Enum.TextYAlignment.Top,
-    BorderSizePixel = 0
+    TextYAlignment = Enum.TextYAlignment.Top
 })
-R(infoLabel, 6)
+R(Contents.Other:FindFirstChildOfClass("TextLabel"), 6)
 
--- Tab Switch System
+-- Tab Switch
 for name, btn in pairs(TabBtns) do
     btn.MouseButton1Click:Connect(function()
         for n, b in pairs(TabBtns) do
-            if n == name then
-                b.BackgroundColor3 = Color3.fromRGB(147, 112, 219)
-                b.TextColor3 = Color3.fromRGB(255, 255, 255)
-                Contents[n].Visible = true
-            else
-                b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-                b.TextColor3 = Color3.fromRGB(180, 180, 180)
-                Contents[n].Visible = false
-            end
+            b.BackgroundColor3 = n == name and Color3.fromRGB(147, 112, 219) or Color3.fromRGB(40, 40, 40)
+            b.TextColor3 = n == name and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+            Contents[n].Visible = n == name
         end
     end)
 end
+
+-- Close
+X.MouseButton1Click:Connect(function() S:Destroy() end)
 
 -- Mobile Support
 if U.TouchEnabled then
@@ -728,14 +548,4 @@ if U.TouchEnabled then
     F.Position = UDim2.new(0.5, -110, 0.5, -150)
 end
 
--- Respawn Handler
-LP.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    if Data.Speed.On then
-        updateCharacter()
-        startSpeedHack()
-        startFakeFireLoop()
-    end
-end)
-
-print("✅ ILLUSION HUB v6 LOADED")
+print("✅ ILLUSION HUB v5 | COMPACT + MINIMIZE + FPS BOOST")
